@@ -1,7 +1,7 @@
 env = Environment(tools=['default', 'packaging'])
 env['paltform'] = 'posix'
 env['LIBS'] = 'usb-1.0'
-env.Program('bin/nvflash', ['nvflash.c'])
+env.Program('bin/nvflash', ['nvflash.c', 'usb.c'])
 
 env.Install('', 'bin/nvflash')
 env.Package( 	NAME 		= 'nvflash',

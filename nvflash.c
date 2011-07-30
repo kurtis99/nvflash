@@ -1,16 +1,13 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-
-#define USB_READ_BUFFER 8192
+#include "nvflash.h"
 
 struct winsize ws;
 
-int debug = 0;
+int debug;
+
+struct UsbIdent NvidiaIdent = {
+	.idProduct = NVIDIA_IDPRODUCT,
+	.idVendor = NVIDIA_IDVENDOR,
+};
 
 static int
 get_console_size(struct winsize* _ws)
@@ -56,59 +53,44 @@ print_hex(const unsigned char* _buf, const size_t _len)
 	printf(": %08X\n", num_printed);
 }
 
-int main(int argc, char* argv[])
+static int check_permitions()
 {
+	int r = 0;
+
+	/* Access to low level device functions usually requires root access, so we check if
+	 * programm was started as root or not */
 	uid_t uid;
 	uid = getuid();
-	if (uid != 0) { 
-		/* Not root */
-		fprintf(stderr, "Need to be root\n");
-		exit(EXIT_FAILURE);
-	}
+	if (uid != 0) 
+		r = -1;		/* if not root */
+
+	return r;
+}
+
+int main(int argc, char* argv[])
+{
+	int r;
+	libusb_device *dev;
 
 	if (getenv("TEST_USB_DEBUG") != NULL)
 		debug = 1;
 
+	r = check_permitions();
+	if (r != 0) {
+		fprintf(stderr, "Not enought permitions.\n");
+		return -1;
+	}
+
 	get_console_size(&ws);
 
-	/* USB bus number and USB device number on bus */
-	int bus, device;
-	if (argc < 2 || argc > 4) {
-		/* set default value */
-		bus = 1;
-		device = 10;
-	}
-	else {
-		bus = atoi(argv[1]);
-		device = atoi(argv[2]);
-		/* TODO: check for value ranges */
+	r = usb_initialize();
+	if (r != 0) {
+		fprintf(stderr, "Cant initialize USB\n");
+		return -1;
 	}
 
-	/* TODO: check if path exist? */
-	char fpath[256];
-	memset(fpath, '\0', sizeof(fpath));
-	snprintf(fpath, sizeof(fpath), "/dev/bus/usb/%03u/%03u", bus, device);
-
-	FILE* fd;
-	fd = fopen(fpath, "w+");
-	if (fd == NULL) {
-		perror(fpath);
-		exit(EXIT_FAILURE);
-	}
-	
-	size_t nr;
-	unsigned char buf[USB_READ_BUFFER];
-	memset(buf, '\0', sizeof(buf));
-	nr = fread(buf, 1, sizeof(buf), fd);
-	if (nr == 0)
-		perror("fread");
-
-	print_hex(buf, nr);
-
-	int ret;
-	ret = fclose(fd);
-	if (ret != 0)
-		perror("flcose");
+	/* nVidia device - idVendor:idProduct 0955:7820 */
+	find_usb_device(NvidiaIdent, dev);
 
 	return 0;
 }
