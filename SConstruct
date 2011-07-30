@@ -1,13 +1,13 @@
 env = Environment(tools=['default', 'packaging'])
 env['paltform'] = 'posix'
-env['LIBS'] = 'usb'
+env['LIBS'] = 'usb-1.0'
 env.Program('bin/nvflash', ['nvflash.c'])
 
-env.Install('/tmp/', 'nvflash')
+env.Install('', 'bin/nvflash')
 env.Package( 	NAME 		= 'foo',
 		VERSION 	= '1.2.3',
 		PACKAGEVERSION	= 0,
-		PACKAGETYPE 	= 'ipkg',
+		PACKAGETYPE 	= 'tarbz2',
 		LICENSE 	= 'gpl',
 		SUMMARY 	= 'balalalalal',
 		DESCRIPTION 	= 'this should be really really long',
