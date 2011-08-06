@@ -1,28 +1,9 @@
 #include "usb.h"
 
-static void
+void
 libusb_perror(int error_code)
 {
 	fprintf(stderr, "%s(): libusb error (%d)\n", __func__, error_code);
-}
-
-int 
-usb_initialize()
-{
-	int r;
-
-	/* This will only work if libusb is compiled with debug support. Also, this value will be
-	 * owerriden with LIBUSB_DEBUG environment variable */
-	if (debug)
-		libusb_set_debug(NULL, 3);
-
-	r = libusb_init(NULL);
-	if (r != 0) {
-		libusb_perror(r);
-		return r;
-	}
-
-	return 0;
 }
 
 int

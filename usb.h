@@ -14,6 +14,7 @@ typedef struct UsbIdent UsbIdent;
 
 extern int usb_initialize();
 extern int find_usb_device(struct UsbIdent, libusb_device *);
+extern void libusb_perror(int);
 
 #endif /* __USB_HEADER */
 

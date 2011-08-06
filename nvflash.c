@@ -71,7 +71,7 @@ int main(int argc, char* argv[])
 {
 	int r;
 	libusb_device *dev;
-
+	struct libusb_config_descriptor *config;
 	if (getenv("TEST_USB_DEBUG") != NULL)
 		debug = 1;
 
@@ -83,14 +83,70 @@ int main(int argc, char* argv[])
 
 	get_console_size(&ws);
 
-	r = usb_initialize();
+	r = libusb_init(NULL);
 	if (r != 0) {
-		fprintf(stderr, "Cant initialize USB\n");
-		return -1;
+		libusb_perror(r);
+		return r;
 	}
 
 	/* nVidia device - idVendor:idProduct 0955:7820 */
 	find_usb_device(NvidiaIdent, dev);
+
+	r = libusb_get_active_config_descriptor(dev, &config);
+	if (r != 0) {
+		fprintf(stderr, "Cant get USB config.\n");
+		return r;
+	}
+
+	int i;
+	if (config->bNumInterfaces > 1) {
+		fprintf(stderr, "Huita.\n");
+		return -1;
+	}
+	if (config->interface->num_altsetting == 0) {
+		fprintf(stderr, "check_usb_interface(): No interface settings\n");
+		return -1;
+	}
+	if (config->interface[0].num_altsetting > 1) {
+		fprintf(stderr, "check_usb_interface(): No interface settings\n");
+		return -1;
+	}
+
+	uint8_t in_endpoint;
+	uint8_t out_endpoint;
+	/* Find endpoint to send data */
+	for (i=config->interface[0].altsetting[0].bNumEndpoints; i; i--) {
+		uint8_t addr = config->interface[0].altsetting[0].endpoint[i].bEndpointAddress;
+		if (addr & LIBUSB_ENDPOINT_IN)
+			in_endpoint = addr;
+		else
+			out_endpoint = addr;
+	}
+
+	libusb_device_handle *handle;
+	r = libusb_open(dev, &handle);
+	if (r != 0) {
+		fprintf(stderr, "Cant USB for read\n");
+		return -1;
+	}
+
+	r = libusb_claim_interface(handle, 0) /* Is there a single interface??? */;
+	if (r != 0) {
+		fprintf(stderr, "Cant claim USB interface.\n");
+		return r;
+	}
+
+	unsigned char buf[4096];
+	int transfered;
+	memset(buf, '\0', sizeof(buf));
+	r = libusb_bulk_transfer(handle, in_endpoint, buf, sizeof(buf), &transfered, 0);
+	if (r != 0) {
+		fprintf(stderr, "Cant read from USB\n");
+		return -1;
+	}
+
+	libusb_close(handle);
+	libusb_exit(NULL);
 
 	return 0;
 }
