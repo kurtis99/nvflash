@@ -4,8 +4,10 @@ if not (build_mode in ['debug', 'release']):
 	print "Wrong build mode. Please see help."
 	Exit(1)
 
-release_flags = '-Os -s'
-debug_flags = '-ggdb'
+warning_flags = "-Wall -Wextra"
+
+release_flags = '-Os -s ' + warning_flags
+debug_flags = '-ggdb ' + warning_flags
 
 env = Environment(tools=['default', 'packaging'])
 if build_mode == 'debug':

@@ -70,7 +70,7 @@ static int check_permitions()
 int main(int argc, char* argv[])
 {
 	int r;
-	libusb_device *dev;
+	libusb_device *dev = NULL;
 	struct libusb_config_descriptor *config;
 	if (getenv("TEST_USB_DEBUG") != NULL)
 		debug = 1;
@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
 	}
 
 	/* nVidia device - idVendor:idProduct 0955:7820 */
-	find_usb_device(NvidiaIdent, dev);
+	find_usb_device(NvidiaIdent, &dev);
 
 	r = libusb_get_active_config_descriptor(dev, &config);
 	if (r != 0) {

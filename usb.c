@@ -7,9 +7,9 @@ libusb_perror(int error_code)
 }
 
 int
-find_usb_device(struct UsbIdent ident, libusb_device *dev_found)
+find_usb_device(struct UsbIdent ident, libusb_device **dev_found)
 {
-	int i;
+	int i = 0;
 	ssize_t cnt;
 	libusb_device **devs;
 	libusb_device *dev;
@@ -26,11 +26,11 @@ find_usb_device(struct UsbIdent ident, libusb_device *dev_found)
 		if (desc.idVendor == ident.idVendor && desc.idProduct == ident.idProduct) {
 			printf("device found (bus %d, device %d)\n",
 				libusb_get_bus_number(dev), libusb_get_device_address(dev));
+			*dev_found = dev;
 			break;
 		}
 	}
 
-	dev_found = dev;
 
 	return 0;
 }
